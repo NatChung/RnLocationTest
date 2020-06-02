@@ -1,114 +1,92 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import React, {useEffect, useState} from 'react';
+import {View, Button, PermissionsAndroid, Platform} from 'react-native';
 
-import React from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const App = () => {
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
 
-const App: () => React$Node = () => {
+  const checkLocationPermission = async () => {
+    if (Platform.OS === 'ios') {
+      Geolocation.setRNConfiguration({authorizationLevel: 'whenInUse'});
+    }
+
+    if (
+      Platform.OS === 'ios' ||
+      (Platform.OS === 'android' && Platform.Version < 23)
+    ) {
+      return true;
+    }
+
+    const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+
+    if (hasPermission) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const requestLocationPermission = async () => {
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+
+    if (status === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('Here is granted');
+      return true;
+    }
+
+    if (status === PermissionsAndroid.RESULTS.DENIED) {
+      console.log('Location permission denied by user.');
+    } else if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      console.log('Location permission revoked by user.');
+    }
+
+    return false;
+  };
+
+  const checkPermission = async () => {
+    // eslint-disable-next-line no-shadow
+    const checkPermission = await checkLocationPermission();
+    setHasLocationPermission(
+      checkPermission ? checkPermission : await requestLocationPermission(),
+    );
+  };
+
+  useEffect(() => {
+    checkPermission();
+  }, []);
+
+  useEffect(() => {
+    if (!hasLocationPermission) {
+      return;
+    }
+
+    const current = Geolocation.watchPosition(
+      (info) => console.log('info', info),
+      (error) => console.log('error', error),
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 0,
+        interval: 5000,
+        fastestInterval: 3000,
+        showLocationDialog: true,
+        forceRequestLocation: true,
+      },
+    );
+
+    return () => Geolocation.clearWatch(current);
+  }, [hasLocationPermission]);
+
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+    // eslint-disable-next-line react-native/no-inline-styles
+    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <Button title="ClickMe" onPress={() => console.log('Debug')} />
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
-});
 
 export default App;

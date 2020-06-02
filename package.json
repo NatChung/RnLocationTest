@@ -4,14 +4,18 @@
   "private": true,
   "scripts": {
     "android": "npx react-native run-android",
+    "android:reverse": "adb reverse tcp:8081 tcp:8081",
+    "android:shake": "$ANDROID_HOME/platform-tools/adb devices | grep '\\t' | awk '{print $1}' | sed 's/\\s//g' | xargs -I {} $ANDROID_HOME/platform-tools/adb -s {} shell input keyevent 82",
     "ios": "npx react-native run-ios",
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@react-native-community/geolocation": "^2.0.2",
     "react": "16.11.0",
-    "react-native": "0.62.2"
+    "react-native": "0.62.2",
+    "react-native-geolocation-service": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
